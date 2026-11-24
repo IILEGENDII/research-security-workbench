@@ -118,7 +118,7 @@ def decode(raw, limit):
                 require(length <= 32768, "token_limit")
                 if escaped:
                     escaped = False
-                elif ch == "\\\\":
+                elif ch == "\\":
                     escaped = True
                 elif ch == '"':
                     quoted = False

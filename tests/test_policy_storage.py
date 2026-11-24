@@ -49,6 +49,29 @@ def test_json_limits(raw):
         decode(raw, 300)
 
 
+@pytest.mark.parametrize("slashes", [0, 1, 2, 3])
+@pytest.mark.parametrize("punctuation", ["[" * 33, "}" * 33], ids=["open-brackets", "close-braces"])
+def test_escaped_quotes_keep_json_punctuation_in_strings(slashes, punctuation):
+    text = "\\" * slashes + '"' + punctuation
+    document = {text: [text, "ends with a backslash\\"]}
+    raw = json.dumps(document).encode()
+    assert decode(raw, len(raw)) == document
+
+
+def test_nesting_limit_after_an_escaped_quote():
+    for depth in (31, 32):
+        nested = None
+        for _ in range(depth):
+            nested = [nested]
+        document = {"description": 'a quote " and a trailing backslash\\', "data": nested}
+        raw = json.dumps(document).encode()
+        if depth == 31:  # The enclosing object accounts for the other level.
+            assert decode(raw, len(raw)) == document
+        else:
+            with pytest.raises(Invalid, match="nesting_limit"):
+                decode(raw, len(raw))
+
+
 def test_raw_and_logical_policy(policy_doc):
     a = parse_policy(encode(policy_doc))
     policy_doc["assets"].reverse()
