@@ -5,6 +5,7 @@ from pathlib import Path
 
 from . import __version__
 from .assessment import assess, compare, render, save_assessment
+from .collect import collect
 from .evidence import load_records, store_report
 from .formats import ASSESSMENT_LIMIT, POLICY_LIMIT, REPORT_LIMIT, Invalid, encode, require
 from .policy import initialize, open_workspace
@@ -20,6 +21,7 @@ def parser():
     commands = cli.add_subparsers(dest="operation", required=True)
     for name, help_text in (
         ("init", "initialize a new private evidence directory"),
+        ("collect", "run a pinned local tool on an explicitly authorized asset"),
         ("import", "retain original JSON and operator declarations"),
         ("evidence", "verify and list stored receipts"),
         ("assess", "assess current evidence"),
@@ -32,6 +34,19 @@ def parser():
         cmd.add_argument("--output", type=Path, help="new report file")
         if name == "init":
             cmd.add_argument("--policy", type=Path, required=True)
+        elif name == "collect":
+            cmd.add_argument("--check", required=True)
+            cmd.add_argument("--authorize-local", action="store_true", required=True)
+            cmd.add_argument("--data-class", choices=("synthetic", "owner_declared"), required=True)
+            for opt in (
+                "source",
+                "dataset",
+                "manifest",
+                "public-key",
+                "inventory",
+                "advisory-evidence",
+            ):
+                cmd.add_argument("--" + opt, type=Path)
         elif name == "import":
             cmd.add_argument("--check", required=True)
             cmd.add_argument("--report", type=Path, required=True)
@@ -58,6 +73,21 @@ def execute(args):
         result = compare(read(args.before, ASSESSMENT_LIMIT), read(args.after, ASSESSMENT_LIMIT))
         return result, result["exit_code"]
     root, policy = open_workspace(args.workspace)
+    if op == "collect":
+        inputs = {
+            k: getattr(args, k)
+            for k in (
+                "source",
+                "dataset",
+                "manifest",
+                "public_key",
+                "inventory",
+                "advisory_evidence",
+            )
+            if getattr(args, k) is not None
+        }
+        receipt = collect(root, policy, args.check, inputs, args.data_class, args.authorize_local)
+        return {"operation": op, "receipt": receipt}, receipt["exit_code"]
     if op == "import":
         r = store_report(
             root,
