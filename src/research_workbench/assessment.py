@@ -240,7 +240,7 @@ def read_assessment(raw):
     number(doc["schema_version"], 1, 1)
     require(
         doc["tool"] == "research-security"
-        and doc["tool_version"] == __version__
+        and doc["tool_version"] in ("0.1.0", __version__)
         and doc["operation"] == "assess",
         "unsupported_contract",
     )

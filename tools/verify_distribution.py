@@ -5,10 +5,14 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+with (ROOT / "pyproject.toml").open("rb") as config:
+    VERSION = tomllib.load(config)["project"]["version"]
+DIST_NAME = f"research_security_workbench-{VERSION}"
 
 
 def files_at(root):
@@ -33,9 +37,7 @@ def inspect(archive):
             }
             assert runtime.keys() == source.keys()
             assert all(
-                n in runtime.values()
-                or n.startswith("research_security_workbench-0.1.0.dist-info/")
-                for n in names
+                n in runtime.values() or n.startswith(f"{DIST_NAME}.dist-info/") for n in names
             )
             for n, path in source.items():
                 assert wheel.read(runtime[n]) == path.read_bytes()
@@ -63,7 +65,7 @@ def inspect(archive):
                 if member.isdir():
                     continue
                 prefix, sep, name = member.name.partition("/")
-                assert prefix == "research_security_workbench-0.1.0" and sep and name not in seen
+                assert prefix == DIST_NAME and sep and name not in seen
                 seen.add(name)
                 if name in permitted:
                     assert tar.extractfile(member).read() == (ROOT / name).read_bytes()
@@ -98,7 +100,7 @@ def check(archive):
             return proc.stdout
 
         for interface in ([cli], [python, "-I", "-m", "research_workbench"]):
-            assert run([*interface, "--version"]).strip() == b"0.1.0"
+            assert run([*interface, "--version"]).strip() == VERSION.encode("ascii")
             assert b"collect" in run([*interface, "--help"])
         ws = root / "demo"
         demo = json.loads(run([cli, "demo", "--workspace", ws]))

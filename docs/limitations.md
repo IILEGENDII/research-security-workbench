@@ -1,4 +1,4 @@
-# Limits in v0.1.0
+# Limits in v0.1.x
 
 - Only the five listed revisions and six named operations have integration evidence. Unknown, malformed and conflicting evidence cannot clear a check.
 - A workstation check requires a local capture. Operator imports and bundled synthetic tests carry weaker assurance. A real workstation requiring backup or restored-file equivalence stays incomplete. An independently authenticated signed digest baseline for ordinary recovery is future work.

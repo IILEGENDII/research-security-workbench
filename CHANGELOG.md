@@ -1,8 +1,10 @@
 # Changes
 
-## Unreleased
+## 0.1.1
 
 The bounded JSON reader now handles escaped quotes and backslashes in keys and values. It counts structural nesting correctly after those strings.
+
+Assessments written by 0.1.0 can be read and compared with 0.1.1 assessments.
 
 ## 0.1.0
 

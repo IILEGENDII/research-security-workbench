@@ -56,6 +56,16 @@ def test_precedence(tmp_path, policy_doc, name, code, age, expected):
     assert read_assessment(encode(after)) == after
 
 
+def test_compare_previous_patch_assessment(tmp_path, policy_doc):
+    root, policy = workspace(tmp_path, policy_doc)
+    current = assess(root, policy, NOW)
+    previous = {**current, "tool_version": "0.1.0"}
+    result = compare(encode(previous), encode(current))
+    assert result["status"] == "unchanged" and result["exit_code"] == 0
+    with pytest.raises(Invalid):
+        read_assessment(encode({**current, "tool_version": "9.0.0"}))
+
+
 def test_ambiguous_newest_and_immutable(tmp_path, policy_doc):
     policy_doc["checks"] = policy_doc["checks"][:1]
     root, policy = workspace(tmp_path, policy_doc)
