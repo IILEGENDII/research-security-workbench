@@ -1,0 +1,13 @@
+# Supported upstream contracts
+
+All five repositories declare version 0.1.0, Python 3.11 or later and the MIT license. The following commits determine compatibility. A version string or operator declaration alone cannot identify the installation.
+
+| Command | Schema | Pinned contract | Fields and limits |
+| --- | --- | --- | --- |
+| sci-security scan | 1.0 string | [8dd63be42914f05ee3cfea168118ca504c5ad625](https://github.com/IILEGENDII/scientific-python-security/blob/8dd63be42914f05ee3cfea168118ca504c5ad625/src/sci_security/report.py) | Completed files, rule IDs, locations and errors. Captures select --fail-on low. |
+| research-integrity verify | 1 integer | [0ecce648d0f25cf0995e870b7998aa5a25bd145e](https://github.com/IILEGENDII/research-data-integrity/blob/0ecce648d0f25cf0995e870b7998aa5a25bd145e/src/research_integrity/verify.py) | Trust, expected and observed inventory, signed changes and errors. Trust failure exits 3. |
+| research-recovery audit / restore-test | 1.0 string | [a85e1c945153efc98d993775e6c9298abd152bea](https://github.com/IILEGENDII/research-backup-auditor/blob/a85e1c945153efc98d993775e6c9298abd152bea/src/research_recovery/restore.py) | Restic 0.20.0. Compare snapshot IDs, repository read scope, planned and observed recovery counts separately. |
+| scientific-fuzz campaign | 1 integer | [68ac36347161e1a4bb76eaf6a6f75d5e10f7c18a](https://github.com/IILEGENDII/scientific-file-fuzzing/blob/68ac36347161e1a4bb76eaf6a6f75d5e10f7c18a/docs/report-format.md) | Three bundled parsers. Attempt totals include duplicates. Completed workers count unique cases. |
+| science-supplychain audit | 1 integer | [84421f66e95d27792264365549bee4de0b66b75d](https://github.com/IILEGENDII/scientific-supply-chain-auditor/blob/84421f66e95d27792264365549bee4de0b66b75d/src/science_supplychain/auditing.py) | Current, partial and historical matches, exact inventory digest, PyPI coverage and replay authenticity. |
+
+Source and integrity lack a producer timestamp and intrinsically bound subject. Import observation times and claimed subjects come from the operator. Backup and restore are import-only. The published backup examples and parser campaign reports are evidence from upstream synthetic runs. A fixture import does not record a local execution.

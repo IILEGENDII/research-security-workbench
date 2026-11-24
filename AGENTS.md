@@ -1,0 +1,1 @@
+Use plain Python, focused functions and comments for non-obvious trust decisions. Keep tests synthetic and local. Preserve adverse evidence under incomplete status. Run the tests at each gate. Never collect credentials, issue network requests, initiate restores or execute scanned files.
