@@ -1,5 +1,6 @@
-from research_workbench.cli import main
 import pytest
+
+from research_workbench.cli import main
 
 
 def test_version(capsys):

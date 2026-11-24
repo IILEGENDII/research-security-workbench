@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "policy_id": "research-workstation-demo",
+  "profile": "synthetic",
+  "assets": [
+    {
+      "id": "solver-source",
+      "kind": "source"
+    },
+    {
+      "id": "material-data",
+      "kind": "dataset"
+    },
+    {
+      "id": "research-backup",
+      "kind": "backup"
+    },
+    {
+      "id": "python-env",
+      "kind": "dependencies"
+    },
+    {
+      "id": "bundled-parsers",
+      "kind": "parser-tests"
+    }
+  ],
+  "checks": [
+    {
+      "id": "source-review",
+      "asset": "solver-source",
+      "type": "source_scan",
+      "required": true,
+      "max_age_hours": 168,
+      "min_severity": "medium"
+    },
+    {
+      "id": "dataset-match",
+      "asset": "material-data",
+      "type": "signed_integrity",
+      "required": true,
+      "max_age_hours": 24
+    },
+    {
+      "id": "backup-check",
+      "asset": "research-backup",
+      "type": "backup_audit",
+      "required": true,
+      "max_age_hours": 72,
+      "min_data_scope": "full",
+      "max_snapshot_age_hours": 72
+    },
+    {
+      "id": "restore-check",
+      "asset": "research-backup",
+      "type": "restore_test",
+      "required": true,
+      "max_age_hours": 168,
+      "require_independent_digest": true
+    },
+    {
+      "id": "dependency-audit",
+      "asset": "python-env",
+      "type": "dependency_audit",
+      "required": true,
+      "max_age_hours": 168,
+      "allow_reviewed_offline_evidence": true
+    },
+    {
+      "id": "parser-validation",
+      "asset": "bundled-parsers",
+      "type": "fuzz_campaign",
+      "required": false,
+      "max_age_hours": 720,
+      "min_attempts": 64,
+      "target": "grid"
+    }
+  ]
+}
