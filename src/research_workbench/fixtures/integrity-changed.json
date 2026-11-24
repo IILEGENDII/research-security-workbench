@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "result": "differences",
+  "manifest_trust": "verified",
+  "summary": {
+    "unchanged": 0,
+    "modified": 1,
+    "added": 0,
+    "missing": 0,
+    "unsupported": 0,
+    "unreadable": 0,
+    "unstable": 0,
+    "signature_invalid": 0,
+    "expected_files": 1,
+    "files_scanned": 1,
+    "bytes_read": 9,
+    "errors": 0
+  },
+  "findings": [
+    {
+      "path": "material.csv",
+      "status": "modified",
+      "expected_sha256": "df63c4c1efa90e5e95aaf077688c7c2d0326caf6cb781399ec2b5817af314156",
+      "expected_size": 9,
+      "observed_sha256": "f9455983bca86d7383749e0c38ba827bd3e90313d80415bc6801cfbdea2305e8",
+      "observed_size": 9
+    }
+  ],
+  "errors": []
+}

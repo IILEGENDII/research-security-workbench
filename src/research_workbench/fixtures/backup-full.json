@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "tool": "research-recovery",
+  "operation": "audit",
+  "status": "healthy",
+  "completed": true,
+  "restic_version": "0.20.0",
+  "check_mode": "full",
+  "snapshot": {
+    "selected_id": "478404001dee456c9fb5be04bdb2d6df4a5e8f4494bb79285d4102a4c009b68d",
+    "latest_time_utc": "2026-11-23T20:32:48.588922+00:00",
+    "matched_count": 1,
+    "selection_status": "unambiguous",
+    "age_hours": 0.000494,
+    "max_age_hours": 72,
+    "freshness_status": "fresh"
+  },
+  "repository_check": {
+    "completed": true,
+    "passed": true,
+    "data_scope": "full",
+    "return_code": 0,
+    "seconds": 0.797,
+    "subset": null
+  },
+  "restore": {},
+  "warnings": [
+    "All packs were checked. Source completeness remains unverified."
+  ],
+  "errors": []
+}

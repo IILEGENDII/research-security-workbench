@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "result": "clean",
+  "manifest_trust": "verified",
+  "summary": {
+    "unchanged": 1,
+    "modified": 0,
+    "added": 0,
+    "missing": 0,
+    "unsupported": 0,
+    "unreadable": 0,
+    "unstable": 0,
+    "signature_invalid": 0,
+    "expected_files": 1,
+    "files_scanned": 1,
+    "bytes_read": 9,
+    "errors": 0
+  },
+  "findings": [
+    {
+      "path": "material.csv",
+      "status": "unchanged"
+    }
+  ],
+  "errors": []
+}

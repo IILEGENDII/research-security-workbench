@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "tool": "sci-security",
+  "summary": {
+    "files_scanned": 1,
+    "findings": 1,
+    "scan_errors": 1
+  },
+  "findings": [
+    {
+      "rule_id": "SCI001",
+      "severity": "high",
+      "confidence": "high",
+      "path": "solver.py",
+      "line": 2,
+      "column": 1,
+      "message": "Potentially unsafe pickle deserialization",
+      "explanation": "Loading a pickle can execute code if its producer or contents are untrusted.",
+      "remediation": "Use a data-only format such as JSON, or document and enforce a trusted source."
+    }
+  ],
+  "errors": [
+    {
+      "path": "broken.py",
+      "kind": "syntax",
+      "message": "Invalid Python syntax.",
+      "line": 1
+    }
+  ]
+}

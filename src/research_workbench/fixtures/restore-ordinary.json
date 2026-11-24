@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "tool": "research-recovery",
+  "operation": "restore-test",
+  "status": "healthy",
+  "completed": true,
+  "restic_version": "0.20.0",
+  "check_mode": null,
+  "snapshot": {
+    "selected_id": "478404001dee456c9fb5be04bdb2d6df4a5e8f4494bb79285d4102a4c009b68d",
+    "selection_status": "pinned"
+  },
+  "repository_check": {},
+  "restore": {
+    "executed": true,
+    "allowed": true,
+    "max_files": 10000,
+    "max_bytes": 1073741824,
+    "target_policy": "new private child of empty workspace",
+    "files": 3,
+    "directories": 1,
+    "logical_bytes": 524375,
+    "sandbox": "recovery-p4oxzmhv",
+    "verified": true,
+    "return_code": 0,
+    "seconds": 0.827,
+    "observed_files": 3,
+    "observed_bytes": 524375,
+    "independent_sha256": false
+  },
+  "warnings": [
+    "Estimates use snapshot metadata. Available disk space can change.",
+    "Plaintext may remain in the named sandbox, including after failure.",
+    "Original-source equivalence has no independent digest baseline."
+  ],
+  "errors": []
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "tool": "sci-security",
+  "summary": {
+    "files_scanned": 0,
+    "findings": 0,
+    "scan_errors": 0
+  },
+  "findings": [],
+  "errors": []
+}

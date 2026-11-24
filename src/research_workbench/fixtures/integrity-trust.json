@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "result": "trust_failure",
+  "manifest_trust": "failed",
+  "summary": {
+    "unchanged": 0,
+    "modified": 0,
+    "added": 0,
+    "missing": 0,
+    "unsupported": 0,
+    "unreadable": 0,
+    "unstable": 0,
+    "signature_invalid": 1,
+    "expected_files": null,
+    "files_scanned": 0,
+    "bytes_read": 0,
+    "errors": 1
+  },
+  "findings": [],
+  "errors": [
+    {
+      "status": "signature_invalid",
+      "path": null,
+      "message": "Manifest does not match the trusted Ed25519 key."
+    }
+  ]
+}
