@@ -6,6 +6,7 @@ from pathlib import Path
 from . import __version__
 from .assessment import assess, compare, render, save_assessment
 from .collect import collect
+from .demo import demo
 from .evidence import load_records, store_report
 from .formats import ASSESSMENT_LIMIT, POLICY_LIMIT, REPORT_LIMIT, Invalid, encode, require
 from .policy import initialize, open_workspace
@@ -20,6 +21,7 @@ def parser():
     cli.add_argument("--version", action="version", version=__version__)
     commands = cli.add_subparsers(dest="operation", required=True)
     for name, help_text in (
+        ("demo", "run synthetic fixture imports on a named replay clock"),
         ("init", "initialize a new private evidence directory"),
         ("collect", "run a pinned local tool on an explicitly authorized asset"),
         ("import", "retain original JSON and operator declarations"),
@@ -66,6 +68,8 @@ def parser():
 
 def execute(args):
     op = args.operation
+    if op == "demo":
+        return demo(args.workspace), 0
     if op == "init":
         initialize(args.workspace, read(args.policy, POLICY_LIMIT))
         return {"operation": op, "status": "initialized"}, 0
