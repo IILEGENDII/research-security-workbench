@@ -20,7 +20,7 @@ def run(seed, count):
     base = examples.joinpath("policy.json").read_bytes()
     raw = examples.joinpath("source-clean.json").read_bytes()
     p = parse_policy(base)
-    now = datetime.now(UTC)
+    now = datetime(2026, 11, 24, 21, 5, tzinfo=UTC)
     with tempfile.TemporaryDirectory() as tmp:
         root = initialize(Path(tmp).resolve() / "private", base)
         receipt = store_report(
@@ -34,6 +34,7 @@ def run(seed, count):
             data_class="synthetic",
             now=now,
         )
+    receipt["receipt_id"] = "0" * 32
     cases = {
         "policy": (base, parse_policy),
         "receipt": (encode(receipt), lambda b: verify(p, receipt["receipt_id"], b, raw, now)),

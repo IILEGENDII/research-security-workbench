@@ -1,5 +1,7 @@
 import os
 import stat
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path, PureWindowsPath
 
 from .formats import Invalid, require
@@ -21,24 +23,17 @@ def local(value):
     if os.name != "nt":
         require(not win.drive and "\\" not in raw, "unsafe_path")
     else:
-        require(
-            not (win.drive and not win.is_absolute())
-            and all(
-                ":" not in part and part.rstrip(" .") == part and not os.path.isreserved(part)
-                for part in win.parts
-                if part != win.anchor
-            ),
-            "unsafe_path",
-        ) if hasattr(os.path, "isreserved") else require(
-            all(
-                ":" not in part
-                and part.rstrip(" .") == part
-                and not PureWindowsPath(part).is_reserved()
-                for part in win.parts
-                if part != win.anchor
-            ),
-            "unsafe_path",
-        )
+        require(not (win.drive and not win.is_absolute()), "unsafe_path")
+        for part in win.parts:
+            if part != win.anchor:
+                reserved = (
+                    os.path.isreserved(part)
+                    if hasattr(os.path, "isreserved")
+                    else PureWindowsPath(part).is_reserved()
+                )
+                require(
+                    not reserved and ":" not in part and part.rstrip(" .") == part, "unsafe_path"
+                )
     p = p.absolute()
     for entry in reversed((p, *p.parents)):
         try:
@@ -82,11 +77,19 @@ def read(path, limit):
 
 def write_new(path, data):
     path = local(path)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)
-    with os.fdopen(fd, "wb") as f:
-        f.write(data)
-        f.flush()
-        os.fsync(f.fileno())
+    fd, name = tempfile.mkstemp(prefix=".incomplete-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        # Both publication operations fail if another writer already claimed the name.
+        if os.name == "nt":
+            os.rename(name, path)
+        else:
+            os.link(name, path)
+    finally:
+        Path(name).unlink(missing_ok=True)
 
 
 def private_dir(path):
@@ -110,10 +113,7 @@ def new_workspace(path):
     )
     for parent in path.parents:
         require(
-            not any(
-                os.path.lexists(parent / name)
-                for name in (".git", "workspace.json", "config.restic", "locks")
-            ),
+            not any(os.path.lexists(parent / name) for name in (".git", "workspace.json")),
             "protected_directory",
         )
         require(
@@ -132,3 +132,13 @@ def children(path, limit):
                 raise Invalid("entry_limit")
             result.append(entry.name)
     return sorted(result)
+
+
+@contextmanager
+def writing(root):
+    lock = root / "write.lock"
+    write_new(lock, b"workbench writer\n")
+    try:
+        yield
+    finally:
+        lock.unlink()

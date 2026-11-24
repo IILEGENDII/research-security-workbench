@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from . import __version__
-from .evidence import load_records
+from .evidence import CONTRACTS, load_records
 from .formats import (
     ASSESSMENT_LIMIT,
     Invalid,
@@ -148,6 +148,7 @@ def status(rows, profile, issues):
 def assess(root, policy, now=None):
     now = now or datetime.now(UTC)
     try:
+        require(not (root / "write.lock").exists(), "workspace_write_in_progress")
         records, errors, _ = load_records(root, policy, now)
     except (Invalid, OSError) as exc:
         records, errors = (
@@ -294,7 +295,36 @@ def read_assessment(raw):
             matches(ev["receipt_id"], "[a-f0-9]{32}")
             digest(ev["report_sha256"])
             digest(ev["receipt_sha256"])
-            choice(ev["collection"], ("fixture_import", "imported", "local_capture"))
+            method = choice(
+                ev["collection"], ("fixture_import", "imported", "local_capture", "failed_capture")
+            )
+            require(
+                ev["tool"] == TYPES[check["type"]][1]
+                and ev["tool_version"] == "0.1.0"
+                and ev["contract"] == CONTRACTS[check["type"]]
+            )
+            require(
+                ev["subject_binding"]
+                == {"local_capture": "local_capture", "failed_capture": "unverified"}.get(
+                    method, "operator_declared"
+                )
+            )
+            choice(ev["data_class"], ("synthetic", "owner_declared"))
+            if method == "failed_capture":
+                require(
+                    ev["exit_code"] is None
+                    and state == "inconclusive"
+                    and ev["operation"] == "capture_failure"
+                )
+            else:
+                number(ev["exit_code"], 0, 3)
+            require(("capture" in ev) == (method == "local_capture"))
+            if state == "satisfied":
+                require((now - utc(ev["observed_at"])) <= timedelta(hours=check["max_age_hours"]))
+                require(
+                    doc["profile"] == "synthetic"
+                    or (method == "local_capture" and ev["data_class"] == "owner_declared")
+                )
             require(
                 utc(ev["observed_at"]) <= utc(ev["imported_at"]) <= now
                 and number(ev["age_seconds"]) == int((now - utc(ev["observed_at"])).total_seconds())

@@ -141,6 +141,21 @@ def campaign(report, check):
     controls = 0
     started = completed = 0
     rows = items(report["cases"])
+    invalid_names = {
+        "table": ("wrong_delimiter",),
+        "metadata": ("duplicate_units", "missing_closing_brace"),
+        "grid": ("unknown_version",),
+    }
+    sequence = (
+        ("valid_variant",),
+        invalid_names[target],
+        ("delete_range",),
+        ("truncate",),
+        ("append",),
+        ("replace_range",),
+        ("insert",),
+        ("baseline",),
+    )
     for i, row in enumerate(rows):
         fields(
             row,
@@ -151,11 +166,24 @@ def campaign(report, check):
         require(case not in ids and number(row["index"]) == i)
         ids.add(case)
         require(digest(row["seed_digest"]) in SEEDS[target])
-        string(row["mutation"])
+        choice(row["mutation"], sequence[i % 8])
         elapsed(row["seconds"])
         number(row["size"], 0, limits["max_input_bytes"])
         status = outcome(row["outcome"])
         expected = row["expected"]
+        if i % 8 in (0, 7):
+            require(
+                isinstance(expected, dict)
+                and expected.keys() == next(iter(SEEDS[target].values())).keys()
+            )
+            for n in expected.values():
+                number(n)
+            if i % 8 == 7:
+                require(expected == SEEDS[target][row["seed_digest"]] and key == row["seed_digest"])
+        elif i % 8 == 1:
+            require(expected == "rejected")
+        else:
+            require(expected is None)
         if expected is not None:
             controls += 1
             require(expected == "rejected" or isinstance(expected, dict))

@@ -165,10 +165,10 @@ def recovery(report, check):
             string(value)
     code = {"healthy": 0 if complete else 2, "failed": 1, "warning": 1, "inconclusive": 2}[status]
     result = Observation(code, {"operation": op}, synthetic=op == "demo")
-    if status != "healthy" or not complete:
+    if not complete or status == "inconclusive":
         result.gaps.append("incomplete_recovery_check")
-        if code == 1:
-            result.findings.append("backup_policy_failure")
+    if code == 1:
+        result.findings.append("backup_policy_failure")
     if report["errors"] and status == "healthy":
         result.gaps.append("upstream_errors")
     require(all(isinstance(report[k], dict) for k in ("snapshot", "repository_check", "restore")))
@@ -191,7 +191,8 @@ def recovery(report, check):
         require(snap["selection_status"] == "unambiguous")
         number(snap["matched_count"], 1)
         utc(snap["latest_time_utc"])
-        hours = number(snap["max_age_hours"], 1)
+        hours = snap["max_age_hours"]
+        require(type(hours) in (int, float) and 0 < hours <= 876000, "invalid_snapshot_window")
         age = snap["age_hours"]
         require(type(age) in (int, float) and age >= 0)
         choice(snap["freshness_status"], ("fresh", "stale"))
@@ -210,12 +211,31 @@ def recovery(report, check):
         passed = flag(repo["passed"])
         require(flag(repo["completed"]) and number(repo["return_code"], 0, 1) == int(not passed))
         require(status != "healthy" or (passed and snap["freshness_status"] == "fresh"))
+        if scope == "subset":
+            from .formats import matches
+
+            part, total = map(
+                int, matches(repo["subset"], r"[1-9][0-9]{0,3}/[1-9][0-9]{0,3}").split("/")
+            )
+            require(part <= total and total >= 2)
         result.coverage.update(data_scope=scope, snapshot_time=snap["latest_time_utc"])
         if SCOPES.index(scope) < SCOPES.index(check["min_data_scope"]):
             result.gaps.append("insufficient_read_scope")
         if not passed:
             result.findings.append("repository_check_failed")
     else:
+        if op != "demo":
+            require(not report["repository_check"] and report["check_mode"] is None)
+        if op == "demo" and status == "healthy":
+            # The demo replaces its snapshot metadata during restore planning. Only the read scope remains.
+            repo = report["repository_check"]
+            require(
+                report["check_mode"] == "full"
+                and repo.get("data_scope") == "full"
+                and repo.get("passed") is True
+                and repo.get("completed") is True
+                and number(repo.get("return_code")) == 0
+            )
         if not result.snapshot or snap.get("selection_status") != "pinned":
             result.gaps.append("snapshot_unbound")
         r = report["restore"]

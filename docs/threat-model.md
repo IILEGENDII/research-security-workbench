@@ -1,0 +1,9 @@
+# Trust model
+
+Trust the operator-selected policy, local clock, Python interpreter and installed tools. The workstation and physical directory ancestry must remain under the owner's control. A report can be stale, altered, unrelated, incomplete or internally contradictory. The workbench validates schemas, relationships and limits, recomputes raw hashes and reports time, selection and provenance explicitly.
+
+An imported observation time, exit code, subject and version are declarations. A local capture measures a command and its interval. Directory bindings hash the selected local path and filesystem identity. A digest of the directory binding does not inventory its contents. A running scanner can observe different files at different times. Protect installation paths, source controls and trusted keys independently.
+
+A writer who can replace both a receipt and its report can create a consistent false record. Independent signed manifests or write-protected storage can help detect replacement when their trust anchors are protected separately. Root access, a compromised interpreter, hostile concurrent writers, mount aliases and clock rollback fall outside the trust model. A SHA-256 match with a release checksum establishes equality against the expected bytes.
+
+Read operations inspect ancestors, reject detected links, reparse points, nonregular files and hard-linked controls and compare descriptor and path metadata. POSIX reads request no-follow and nonblocking descriptors where available. New files use a flushed private temporary file and a no-clobber hard link on POSIX or rename on Windows. Receipt metadata is published last. A leftover incomplete directory or write lock blocks satisfaction. Directory entry durability, hostile path replacement, Windows ACL enforcement and external private-storage backups remain operator responsibilities.

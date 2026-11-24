@@ -12,7 +12,7 @@ from importlib import metadata, resources
 from pathlib import Path
 
 from .evidence import INPUTS, OPTIONS, store_report
-from .formats import REPORT_LIMIT, Invalid, require, sha, stamp
+from .formats import REPORT_LIMIT, Invalid, encode, require, sha, stamp
 from .storage import local, read
 
 PACKAGES = {
@@ -174,6 +174,31 @@ def collect(root, policy, check_id, inputs, data_class, authorized):
     kind = policy.checks[check_id]["type"]
     require(kind in PACKAGES, "import_only_operation")
     require(data_class in ("synthetic", "owner_declared"))
+    try:
+        return run_tool(root, policy, check_id, kind, inputs, data_class)
+    except (Invalid, OSError, KeyboardInterrupt) as exc:
+        reason = (
+            str(exc)
+            if isinstance(exc, Invalid)
+            else "capture_interrupted"
+            if isinstance(exc, KeyboardInterrupt)
+            else "capture_io_error"
+        )
+        store_report(
+            root,
+            policy,
+            check_id,
+            encode({"operation": "capture_failure", "reason": reason}),
+            version="0.1.0",
+            observed_at=stamp(),
+            exit_code=None,
+            data_class=data_class,
+            method="failed_capture",
+        )
+        raise Invalid(reason) from None
+
+
+def run_tool(root, policy, check_id, kind, inputs, data_class):
     args, digests = prepare(root, kind, inputs)
     module = installed_module(kind)
     interpreter = Path(sys.executable)

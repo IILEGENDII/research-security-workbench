@@ -109,15 +109,28 @@ def decode(raw, limit):
             require(len(token) <= 40 and math.isfinite(float(token)), "number_limit")
             return float(token)
 
-        # Cap container depth before the decoder builds nested Python objects.
-        depth = 0
-        for tokens, m in enumerate(
-            re.finditer(r'"(?:[^"\\]|\\.)*"|[\[\]{},:]', text, re.DOTALL), 1
-        ):
-            token = m[0]
-            require(tokens <= 450000 and len(token) <= 32768, "token_limit")
-            depth += int(token in ("[", "{")) - int(token in ("]", "}"))
-            require(0 <= depth <= 32, "nesting_limit")
+        # Scan before allocating the object tree, including unterminated strings.
+        depth = tokens = length = 0
+        quoted = escaped = False
+        for ch in text:
+            if quoted:
+                length += 1
+                require(length <= 32768, "token_limit")
+                if escaped:
+                    escaped = False
+                elif ch == "\\\\":
+                    escaped = True
+                elif ch == '"':
+                    quoted = False
+            elif ch == '"':
+                quoted = True
+                length = 0
+                tokens += 1
+            elif ch in "[]{}:,":
+                depth += int(ch in "[{") - int(ch in "]}")
+                require(0 <= depth <= 32, "nesting_limit")
+                tokens += 1
+            require(tokens <= 450000, "token_limit")
         value = json.loads(
             text,
             object_pairs_hook=_pairs,

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from .adapters import integrity, recovery, source
+from .adapters import Observation, integrity, recovery, source
 from .campaign import campaign
 from .dependencies import dependencies
 from .formats import (
@@ -24,7 +24,7 @@ from .formats import (
     utc,
 )
 from .policy import TYPES
-from .storage import children, private_dir, read, write_new
+from .storage import children, private_dir, read, write_new, writing
 
 CONTRACTS = {
     "source_scan": "source-1.0",
@@ -97,7 +97,9 @@ def verify(policy, identifier, metadata, raw, now):
     observed = utc(receipt["observed_at"])
     imported = utc(receipt["imported_at"])
     require(observed <= imported <= now, "invalid_time_order")
-    method = choice(receipt["collection"], ("imported", "fixture_import", "local_capture"))
+    method = choice(
+        receipt["collection"], ("imported", "fixture_import", "local_capture", "failed_capture")
+    )
     choice(receipt["data_class"], ("synthetic", "owner_declared"))
     require(method != "fixture_import" or receipt["data_class"] == "synthetic")
     if method == "local_capture":
@@ -117,6 +119,12 @@ def verify(policy, identifier, metadata, raw, now):
         for value in capture["inputs"].values():
             digest(value)
         require(items(capture["options"]) == OPTIONS[kind])
+    elif method == "failed_capture":
+        require(
+            kind in INPUTS
+            and "capture" not in receipt
+            and receipt["subject_binding"] == "unverified"
+        )
     else:
         require("capture" not in receipt and receipt["subject_binding"] == "operator_declared")
     require(
@@ -124,7 +132,18 @@ def verify(policy, identifier, metadata, raw, now):
         and receipt["report_sha256"] == sha(raw),
         "digest_mismatch",
     )
-    obs = normalize(raw, check, receipt["exit_code"])
+    if method == "failed_capture":
+        failure = decode(raw, 1024)
+        fields(failure, "operation reason")
+        require(failure["operation"] == "capture_failure" and receipt["exit_code"] is None)
+        reason = matches(failure["reason"], "[a-z_]{1,64}")
+        obs = Observation(2, {"operation": "capture_failure"}, gaps=[reason])
+    else:
+        obs = normalize(raw, check, receipt["exit_code"])
+        if method == "local_capture" and kind == "dependency_audit":
+            require(obs.coverage["source"] == "offline-replay", "capture_mode_conflict")
+        if method == "local_capture" and kind == "signed_integrity":
+            require(obs.coverage["manifest_trust"] != "unauthenticated", "capture_mode_conflict")
     return Record(receipt, sha(metadata), obs)
 
 
@@ -192,7 +211,9 @@ def store_report(
         "tool_version": version,
         "contract": CONTRACTS[kind],
         "collection": method,
-        "subject_binding": "local_capture" if method == "local_capture" else "operator_declared",
+        "subject_binding": {"local_capture": "local_capture", "failed_capture": "unverified"}.get(
+            method, "operator_declared"
+        ),
         "data_class": data_class,
         "observed_at": observed_at,
         "imported_at": stamp(now),
@@ -204,6 +225,12 @@ def store_report(
         receipt["capture"] = capture
     metadata = encode(receipt)
     verify(policy, identifier, metadata, raw, now)
+    with writing(root):
+        publish(root, policy, now, identifier, raw, metadata)
+    return receipt
+
+
+def publish(root, policy, now, identifier, raw, metadata):
     records, errors, total = load_records(root, policy, now)
     require(
         not errors and len(records) < 200 and total + len(raw) + len(metadata) <= TOTAL_LIMIT,
@@ -214,4 +241,3 @@ def store_report(
     write_new(folder / "report.json", raw)
     # The receipt is the final record. A crashed import remains visibly incomplete.
     write_new(folder / "receipt.json", metadata)
-    return receipt

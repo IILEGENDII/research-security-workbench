@@ -68,6 +68,11 @@ def dependencies(report, check):
         omitted.add(i)
         reasons.append(choice(row["reason"], REASONS))
     require(len(omitted) == c["unassessed"])
+    require(reasons.count("outside_evidence_selection") == c["eligible"] - c["selected"])
+    require(
+        sum(r in ("direct", "editable", "local_version", "unsupported_identity") for r in reasons)
+        == total - c["eligible"]
+    )
     require(reasons.count("stale_evidence") == (c["selected"] if stale else 0))
     require(sum(r in REASONS[:11] for r in reasons) == c["incomplete_lookups"])
     current = set()

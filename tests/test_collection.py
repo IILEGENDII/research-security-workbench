@@ -58,4 +58,12 @@ def test_no_capture_on_error(tmp_path, policy_doc, monkeypatch):
         )
         with pytest.raises(Invalid):
             collect(root, policy, "source-review", **kwargs)
-    assert not list((root / "evidence").iterdir())
+    from research_workbench.assessment import assess
+
+    assert len(list((root / "evidence").iterdir())) == 2
+    row = next(r for r in assess(root, policy)["checks"] if r["check_id"] == "source-review")
+    assert (
+        row["state"] == "inconclusive"
+        and row["evidence"]["collection"] == "failed_capture"
+        and row["evidence"]["exit_code"] is None
+    )

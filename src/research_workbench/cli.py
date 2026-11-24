@@ -10,11 +10,19 @@ from .demo import demo
 from .evidence import load_records, store_report
 from .formats import ASSESSMENT_LIMIT, POLICY_LIMIT, REPORT_LIMIT, Invalid, encode, require
 from .policy import initialize, open_workspace
-from .storage import read, write_new
+from .storage import local, read, write_new
+
+
+class CommandParser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, allow_abbrev=False, **kwargs)
+
+    def error(self, message):
+        self.exit(2, "Invalid arguments. See --help for the accepted options.\n")
 
 
 def parser():
-    cli = argparse.ArgumentParser(
+    cli = CommandParser(
         prog="research-security",
         description="Evaluate local workstation evidence against a declared policy.",
     )
@@ -121,6 +129,17 @@ def execute(args):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.output:
+            destination = local(args.output)
+            require(
+                destination.suffix == (".json" if args.format == "json" else ".txt")
+                and not destination.exists(),
+                "choose_new_report_file",
+            )
+            for key in ("workspace", "source", "dataset"):
+                protected = getattr(args, key, None)
+                if protected is not None:
+                    require(not destination.is_relative_to(local(protected)), "protected_output")
         result, code = execute(args)
         data = encode(result)
         if args.format == "text":
